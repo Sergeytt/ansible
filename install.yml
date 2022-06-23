@@ -1,0 +1,74 @@
+- name: Install server system
+  hosts: dev_server, web_server
+  become: yes
+
+  vars:
+    pakages:
+      - sudo
+      - nginx
+      - tree
+      - htop
+      - vim
+    ssh_key: /home/sergey/.ssh/id_rsa.pub
+    nginx_template: web-config.j2
+
+  tasks:
+    - block:
+      - name: Install pakages
+        ansible.builtin.dnf:
+         name: "{{ pakages }}"
+         state: present
+
+      - name : Start nginx
+        ansible.builtin.service:
+         name: nginx
+         state: started
+
+      - name: Copy file nginx
+        ansible.builtin.template:
+          src: "{{ nginx_template }}"
+          dest: /usr/share/nginx/html/index.html
+
+      when: ansible_os_family == 'RedHat'
+
+    - block:
+      - name: Install pakages
+        ansible.builtin.apt:
+          name: "{{ pakages }}"
+          state: present
+      
+      - name: Copy file nginx
+        ansible.builtin.template:
+          src: "{{ nginx_template }}"
+          dest: /var/www/html/index.html
+
+      when: ansible_os_family == 'Debian'
+
+    - name: Create user
+      ansible.builtin.user:
+       name: sergey
+       shell: /bin/bash
+       password: "{{' password' | password_hash('sha512', 'Admin1280') }}" 
+       groups: root
+
+    - ansible.builtin.file:
+       path: /home/sergey/.ssh
+       state: directory
+       owner: root
+       group: root
+       mode: 0644
+    
+    - ansible.builtin.copy:
+       src: "{{ ssh_key }}"
+       dest: /home/sergey/.ssh/authorized_keys
+       owner: root
+       group: root
+       mode: 0644
+
+    - name: Restart nginx
+      ansible.builtin.service:
+       name: nginx
+       state: reloaded
+
+          
+  

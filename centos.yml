@@ -1,0 +1,48 @@
+- name: Centos server
+  hosts: group1
+  become: yes
+
+  vars:
+    pakages:
+      - nginx
+      - htop
+      - tree 
+      - rsync
+      - iftop
+      - atop
+      - wget
+      - git
+
+    file_src: web-config.conf
+    file_dest: /opt/
+
+  tasks:
+  - name: Tasks ping
+    ansible.builtin.ping:
+
+  - name: Update cache
+    ansible.builtin.dnf:
+      update_cache: yes
+  
+  - name: Install pakages minimal
+    ansible.builtin.dnf:
+      name: "{{ pakages }}"
+      state: present
+
+  - name: Start name nginx
+    ansible.builtin.service:
+      name: nginx
+      state: started
+
+  - name: Copy file config
+    ansible.builtin.copy:
+      src: "{{ file_src }}"
+      dest: "{{ file_dest }}"
+      mode: '664'
+      owner: sergey
+      group: root
+
+  - name: Info systemm 
+    ansible.builtin.debug:
+      var: ansible_distribution
+

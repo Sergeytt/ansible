@@ -1,0 +1,47 @@
+- name: Debian servers
+  hosts: web_group
+  become: yes
+
+  vars:
+    pakages:
+      - nginx
+      - htop
+      - tree
+      - iftop
+      - atop
+      - rsync
+      - git
+      - wget
+
+    file_src: web-config.conf
+    file_dest: /opt/
+     
+  tasks:
+  - name: Test ping
+    ansible.builtin.ping:
+
+  - name: Update cache
+    ansible.builtin.apt:
+      update_cache: yes
+
+  - name: Upgrade pakages
+    ansible.builtin.apt:
+      upgrade: yes
+
+  - name: Install nginx
+    ansible.builtin.apt:
+      name: "{{ pakages }}"
+      state: present
+
+  - name: Start nginx
+    ansible.builtin.service:
+      name: nginx
+      state: started
+
+  - name: Copy file config
+    ansible.builtin.copy:
+      src: "{{ file_src }}"
+      dest: "{{ file_dest }}"
+      owner: sergey
+      group: root
+      mode: '664'

@@ -1,0 +1,62 @@
+- name: Install pakages
+  hosts: all
+  become: yes
+
+  vars:
+    pakages:
+      - nginx
+      - tree
+      - htop
+      - iftop
+      - atop
+      - git
+      - wget
+      - vim
+
+    file_src: web-config.j2
+    dir_dest_centos: /usr/share/nginx/html/
+    dir_dest_debian: /var/www/html/
+
+  tasks:
+   - block:
+     - name: Install pakages
+       ansible.builtin.dnf:
+        name: "{{ pakages }}"
+        state: present
+
+     - name: Copy file config
+       ansible.builtin.template:
+        src: "{{ file_src }}"
+        dest: '{{ dir_dest_centos }}/index.html'
+        owner: sergey
+        group: root
+        mode: 0664
+
+     - name: Restart nginx
+       ansible.builtin.service:
+         name: nginx
+         state: reloaded
+
+     when: ansible_os_family == 'RedHat'
+
+   - block:
+     - name: Install pakages
+       ansible.builtin.apt:
+        name: "{{ pakages }}"
+        state: present
+
+     - name: Copy file config
+       ansible.builtin.template:
+        src: "{{ file_src }}"
+        dest: "{{ dir_dest_debian }}/index.html"
+        owner: sergey
+        group: root
+        mode: 0664
+
+     - name: Restart nginx
+       ansible.builtin.service:
+         name: nginx
+         state: reloaded
+
+     when: ansible_os_family == 'Debian'
+
